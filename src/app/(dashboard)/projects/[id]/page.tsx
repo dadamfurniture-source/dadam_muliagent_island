@@ -11,7 +11,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ProjectStatusSelect } from "@/components/projects/project-status-select";
 import { OrderItemForm } from "@/components/projects/order-item-form";
+import { QuoteSection } from "@/components/quote/quote-section";
 import { getProject, getProjectItems } from "@/lib/actions/projects";
+import { getQuotes } from "@/lib/actions/quotes";
 import { FURNITURE_TYPE_LABELS } from "@/types";
 import type { ProjectStatus, FurnitureType } from "@/types";
 
@@ -24,10 +26,14 @@ export default async function ProjectDetailPage({
 
   let project;
   let items: Awaited<ReturnType<typeof getProjectItems>> = [];
+  let quotes: Awaited<ReturnType<typeof getQuotes>> = [];
 
   try {
-    project = await getProject(id);
-    items = await getProjectItems(id);
+    [project, items, quotes] = await Promise.all([
+      getProject(id),
+      getProjectItems(id),
+      getQuotes(id),
+    ]);
   } catch {
     notFound();
   }
@@ -139,6 +145,15 @@ export default async function ProjectDetailPage({
           )}
         </CardContent>
       </Card>
+
+      <Separator />
+
+      {/* 견적서 */}
+      <QuoteSection
+        projectId={project.id}
+        quotes={quotes}
+        hasItems={items.length > 0}
+      />
     </div>
   );
 }
