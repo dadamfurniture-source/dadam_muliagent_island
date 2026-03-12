@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { AGENT_ROLE_LABELS } from "@/lib/ai/agents/types";
 import type { AgentMessage } from "@/lib/ai/agents/types";
 
+interface AttachedImage {
+  base64: string;
+  mimeType: string;
+  previewUrl: string;
+  fileName: string;
+}
+
 export function ChatPanel() {
   const {
     messages,
@@ -27,11 +34,12 @@ export function ChatPanel() {
     }
   }, [messages]);
 
-  async function handleSend(content: string) {
+  async function handleSend(content: string, image?: AttachedImage) {
     const userMessage: AgentMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content,
+      imageUrl: image?.previewUrl,
       createdAt: new Date().toISOString(),
     };
 
@@ -39,13 +47,24 @@ export function ChatPanel() {
     setLoading(true);
 
     try {
+      const requestBody: Record<string, unknown> = {
+        message: content,
+        conversationHistory: messages.concat(userMessage),
+      };
+
+      // 이미지 첨부 시 base64 데이터 포함
+      if (image) {
+        requestBody.imageData = {
+          base64: image.base64,
+          mimeType: image.mimeType,
+          url: image.previewUrl, // 임시 URL, 서버에서 Storage URL로 교체
+        };
+      }
+
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: content,
-          conversationHistory: messages.concat(userMessage),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await res.json();
@@ -115,6 +134,12 @@ export function ChatPanel() {
                 className="rounded-lg border px-4 py-2 text-left hover:bg-gray-50"
               >
                 &quot;주방 싱크대를 교체하고 싶어요&quot;
+              </button>
+              <button
+                onClick={() => handleSend("현장사진에 가구를 합성해보고 싶어요")}
+                className="rounded-lg border px-4 py-2 text-left hover:bg-gray-50"
+              >
+                &quot;현장사진에 가구를 합성해보고 싶어요&quot;
               </button>
               <button
                 onClick={() => handleSend("붙박이장 견적이 궁금해요")}

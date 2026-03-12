@@ -39,10 +39,26 @@ export function ChatMessage({ message }: ChatMessageProps) {
             {AGENT_ROLE_LABELS[message.agentRole] || message.agentRole}
           </Badge>
         )}
+
+        {/* 사용자 첨부 이미지 (채팅 메시지 상단에 표시) */}
+        {isUser && message.imageUrl && (
+          <div className="mb-2 relative w-full max-w-[240px] aspect-[4/3]">
+            <Image
+              src={message.imageUrl}
+              alt="첨부 사진"
+              fill
+              className="rounded-lg object-cover"
+              unoptimized={message.imageUrl.startsWith("blob:")}
+            />
+          </div>
+        )}
+
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {message.content}
         </div>
-        {message.imageUrl && (
+
+        {/* AI 생성 이미지 (메시지 하단에 표시) */}
+        {!isUser && message.imageUrl && (
           <div className="mt-3 relative w-full aspect-video">
             <Image
               src={message.imageUrl}
