@@ -111,14 +111,14 @@ export async function generateAIImage(params: {
   const monthlyUsage = await getImageUsageThisMonth();
   const { data: subscription } = await supabase
     .from("subscriptions")
-    .select("plan_id, subscription_plans(image_limit)")
+    .select("plan_id, subscription_plans(ai_image_limit)")
     .eq("user_id", user.id)
     .eq("status", "active")
     .single();
 
   // subscription_plans는 join 결과 (단일 객체 또는 배열)
-  const plans = subscription?.subscription_plans as unknown as { image_limit: number } | null;
-  const imageLimit = plans?.image_limit ?? 3;
+  const plans = subscription?.subscription_plans as unknown as { ai_image_limit: number } | null;
+  const imageLimit = plans?.ai_image_limit ?? 3;
   if (monthlyUsage >= imageLimit) {
     throw new Error(
       `이번 달 이미지 생성 한도(${imageLimit}회)에 도달했습니다. 플랜을 업그레이드해주세요.`,
@@ -215,8 +215,9 @@ export async function generateAIImage(params: {
       description: result.text || null,
     };
   } catch (error) {
-    // 실패 시 상태 업데이트
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    // 실패 시 상태 업데이트 (내부 에러 메시지는 저장하지 않음)
+    console.error("AI image generation failed:", error);
+    const errorMsg = "이미지 생성에 실패했습니다.";
     await supabase
       .from("ai_images")
       .update({

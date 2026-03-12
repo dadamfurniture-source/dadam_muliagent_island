@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/actions/auth-guard";
+import { escapeIlike } from "@/lib/utils";
 
 export async function getCustomers(search?: string) {
   const { supabase } = await requireAuth();
@@ -11,7 +12,8 @@ export async function getCustomers(search?: string) {
     .order("created_at", { ascending: false });
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,address.ilike.%${search}%`);
+    const s = escapeIlike(search);
+    query = query.or(`name.ilike.%${s}%,phone.ilike.%${s}%,address.ilike.%${s}%`);
   }
 
   const { data, error } = await query;

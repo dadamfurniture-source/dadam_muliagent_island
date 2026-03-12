@@ -80,11 +80,9 @@ export async function POST(request: NextRequest) {
       }
     }
   } catch (error) {
+    // 200을 반환하여 Stripe 재시도를 방지하고, 에러는 로그로만 기록
     console.error("Webhook handler error:", error);
-    return NextResponse.json(
-      { error: "Webhook handler failed" },
-      { status: 500 },
-    );
+    return NextResponse.json({ received: true, error: "handler_failed" });
   }
 
   return NextResponse.json({ received: true });

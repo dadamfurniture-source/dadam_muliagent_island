@@ -14,7 +14,7 @@ export async function getSchedules(filters?: {
     .select("*, project:projects(id, title, status)")
     .order("scheduled_date", { ascending: true });
 
-  if (filters?.month && /^\d{4}-\d{2}$/.test(filters.month)) {
+  if (filters?.month && /^\d{4}-(0[1-9]|1[0-2])$/.test(filters.month)) {
     const startDate = `${filters.month}-01`;
     const [year, month] = filters.month.split("-").map(Number);
     const lastDay = new Date(year, month, 0).getDate();

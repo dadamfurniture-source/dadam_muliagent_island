@@ -3,14 +3,17 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { generateFurnitureImage } from "@/lib/ai/gemini";
 
+// 프롬프트 인젝션 방지: 줄바꿈/제어문자 제거, 길이 제한
+const sanitize = (s: string) => s.replace(/[\n\r\t\x00-\x1f]/g, " ").trim().slice(0, 100);
+
 const requestSchema = z.object({
   drawingImageBase64: z.string().min(1),
   drawingId: z.string().uuid(),
-  furnitureType: z.string().min(1),
-  style: z.string().optional(),
-  material: z.string().optional(),
-  color: z.string().optional(),
-  description: z.string().optional(),
+  furnitureType: z.string().min(1).max(50),
+  style: z.string().max(50).optional(),
+  material: z.string().max(50).optional(),
+  color: z.string().max(50).optional(),
+  description: z.string().max(200).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -56,10 +59,10 @@ export async function POST(request: NextRequest) {
       "도면의 구조, 치수, 비율을 정확히 반영하세요.",
     ];
 
-    if (style) promptParts.push(`스타일: ${style}`);
-    if (material) promptParts.push(`자재: ${material}, 재질감을 사실적으로 표현하세요.`);
-    if (color) promptParts.push(`색상: ${color}`);
-    if (description) promptParts.push(`추가 설명: ${description}`);
+    if (style) promptParts.push(`스타일: ${sanitize(style)}`);
+    if (material) promptParts.push(`자재: ${sanitize(material)}, 재질감을 사실적으로 표현하세요.`);
+    if (color) promptParts.push(`색상: ${sanitize(color)}`);
+    if (description) promptParts.push(`추가 설명: ${sanitize(description)}`);
 
     promptParts.push(
       "조명과 그림자가 자연스러운 고품질 제품 사진 스타일로 렌더링하세요.",

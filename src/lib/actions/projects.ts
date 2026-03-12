@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/actions/auth-guard";
+import { escapeIlike } from "@/lib/utils";
 import type { ProjectStatus } from "@/types";
 
 export async function getProjects(filters?: {
@@ -18,8 +19,9 @@ export async function getProjects(filters?: {
     query = query.eq("status", filters.status);
   }
   if (filters?.search) {
+    const s = escapeIlike(filters.search);
     query = query.or(
-      `title.ilike.%${filters.search}%,address.ilike.%${filters.search}%`,
+      `title.ilike.%${s}%,address.ilike.%${s}%`,
     );
   }
 

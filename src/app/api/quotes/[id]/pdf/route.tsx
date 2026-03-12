@@ -20,15 +20,21 @@ export async function GET(
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
 
-    // 견적 + 프로젝트 + 고객 정보 조회
+    // 견적 + 프로젝트 + 고객 정보 조회 (owner_id로 소유권 검증)
     const { data: quote, error } = await supabase
       .from("quotes")
-      .select("*, project:projects(id, title, address, customer:customers(id, name, phone, address))")
+      .select("*, project:projects!inner(id, title, address, owner_id, customer:customers(id, name, phone, address))")
       .eq("id", id)
       .single();
 
     if (error || !quote) {
       return NextResponse.json({ error: "견적을 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    // 소유권 검증
+    const project = quote.project as { owner_id: string } | null;
+    if (project?.owner_id !== user.id) {
+      return NextResponse.json({ error: "접근 권한이 없습니다." }, { status: 403 });
     }
 
     // 사업자 프로필 조회
