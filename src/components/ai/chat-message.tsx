@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import type { AgentMessage } from "@/lib/ai/agents/types";
 import { AGENT_ROLE_LABELS } from "@/lib/ai/agents/types";
+import Image from "next/image";
 
 interface ChatMessageProps {
   message: AgentMessage;
@@ -42,11 +43,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
           {message.content}
         </div>
         {message.imageUrl && (
-          <div className="mt-3">
-            <img
+          <div className="mt-3 relative w-full aspect-video">
+            <Image
               src={message.imageUrl}
               alt="생성된 이미지"
-              className="max-w-full rounded-lg"
+              fill
+              className="rounded-lg object-contain"
             />
           </div>
         )}

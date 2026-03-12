@@ -1,9 +1,9 @@
-export { Orchestrator, getOrchestrator } from "./orchestrator";
-export { BaseAgent } from "./base-agent";
-export { ConsultationAgent } from "./consultation-agent";
-export { ImageAgent } from "./image-agent";
-export { QuoteAgent } from "./quote-agent";
-export { ScheduleAgent } from "./schedule-agent";
+export { Orchestrator, getOrchestrator } from "@/lib/ai/agents/orchestrator";
+export { BaseAgent } from "@/lib/ai/agents/base-agent";
+export { ConsultationAgent } from "@/lib/ai/agents/consultation-agent";
+export { ImageAgent } from "@/lib/ai/agents/image-agent";
+export { QuoteAgent } from "@/lib/ai/agents/quote-agent";
+export { ScheduleAgent } from "@/lib/ai/agents/schedule-agent";
 export type {
   AgentRole,
   AgentConfig,
@@ -12,5 +12,5 @@ export type {
   AgentResponse,
   AgentTool,
   OrchestratorDecision,
-} from "./types";
-export { AGENT_ROLE_LABELS } from "./types";
+} from "@/lib/ai/agents/types";
+export { AGENT_ROLE_LABELS } from "@/lib/ai/agents/types";

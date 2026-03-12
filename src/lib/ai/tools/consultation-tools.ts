@@ -1,4 +1,4 @@
-import type { AgentTool } from "../agents/types";
+import type { AgentTool } from "@/lib/ai/agents/types";
 import { FURNITURE_TYPE_LABELS } from "@/types";
 
 export const consultationTools: AgentTool[] = [

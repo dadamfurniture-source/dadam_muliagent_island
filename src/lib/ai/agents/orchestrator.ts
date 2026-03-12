@@ -4,16 +4,18 @@ import type {
   AgentResponse,
   AgentRole,
   OrchestratorDecision,
-} from "./types";
-import { ConsultationAgent } from "./consultation-agent";
-import { ImageAgent } from "./image-agent";
-import { QuoteAgent } from "./quote-agent";
-import { ScheduleAgent } from "./schedule-agent";
-import { BaseAgent } from "./base-agent";
+} from "@/lib/ai/agents/types";
+import { ConsultationAgent } from "@/lib/ai/agents/consultation-agent";
+import { ImageAgent } from "@/lib/ai/agents/image-agent";
+import { QuoteAgent } from "@/lib/ai/agents/quote-agent";
+import { ScheduleAgent } from "@/lib/ai/agents/schedule-agent";
+import { BaseAgent } from "@/lib/ai/agents/base-agent";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
+
+const VALID_AGENTS: AgentRole[] = ["consultation", "image", "quote", "schedule"];
 
 const ORCHESTRATOR_SYSTEM_PROMPT = `당신은 주문제작 가구 AI 플랫폼의 오케스트레이터입니다.
 사용자의 메시지를 분석하여 가장 적합한 전문 에이전트에게 작업을 위임합니다.
@@ -56,6 +58,7 @@ export class Orchestrator {
     // 2. 해당 에이전트에 작업 위임
     const agent = this.agents.get(decision.targetAgent);
     if (!agent) {
+      console.error(`Agent "${decision.targetAgent}" not found in registry`);
       return {
         message: "죄송합니다. 요청을 처리할 수 없습니다. 다시 시도해주세요.",
         agentRole: "orchestrator",
@@ -105,15 +108,25 @@ export class Orchestrator {
       const text =
         response.content[0].type === "text" ? response.content[0].text : "";
 
-      // JSON 파싱
+      // JSON 파싱 (안전하게)
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          targetAgent: parsed.targetAgent as AgentRole,
-          reason: parsed.reason || "",
-          modifiedPrompt: parsed.modifiedPrompt,
-        };
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const targetAgent = parsed.targetAgent as AgentRole;
+
+          // 유효한 에이전트인지 검증
+          if (VALID_AGENTS.includes(targetAgent)) {
+            return {
+              targetAgent,
+              reason: parsed.reason || "",
+              modifiedPrompt: parsed.modifiedPrompt,
+            };
+          }
+          console.warn(`Invalid agent "${targetAgent}", falling back to consultation`);
+        } catch (parseError) {
+          console.error("Orchestrator JSON parse error:", parseError);
+        }
       }
     } catch (error) {
       console.error("Orchestrator decision error:", error);

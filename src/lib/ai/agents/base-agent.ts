@@ -3,8 +3,7 @@ import type {
   AgentConfig,
   AgentContext,
   AgentResponse,
-  AgentTool,
-} from "./types";
+} from "@/lib/ai/agents/types";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -32,7 +31,7 @@ export class BaseAgent {
       messages,
     });
 
-    return this.processResponse(response, context);
+    return this.processResponse(response, messages);
   }
 
   private buildMessages(
@@ -53,10 +52,12 @@ export class BaseAgent {
     }
 
     // 현재 메시지
-    messages.push({
-      role: "user",
-      content: userMessage,
-    });
+    if (userMessage) {
+      messages.push({
+        role: "user",
+        content: userMessage,
+      });
+    }
 
     return messages;
   }
@@ -71,7 +72,7 @@ export class BaseAgent {
 
   private async processResponse(
     response: Anthropic.Message,
-    context: AgentContext,
+    originalMessages: Anthropic.MessageParam[],
   ): Promise<AgentResponse> {
     const toolResults: Array<{ tool: string; result: unknown }> = [];
     let finalText = "";
@@ -126,22 +127,23 @@ export class BaseAgent {
         }
       }
 
-      // 도구 실행 후 후속 응답 받기
+      // 도구 실행 후 후속 응답: 원본 대화 + 어시스턴트 응답 + 도구 결과
       const followUp = await anthropic.messages.create({
         model: this.config.model,
         max_tokens: this.config.maxTokens ?? 2048,
         system: this.config.systemPrompt,
         messages: [
-          ...this.buildMessages("", context).slice(0, -1),
-          { role: "user", content: response.content[0].type === "text" ? response.content[0].text : "" },
+          ...originalMessages,
           { role: "assistant", content: response.content },
           { role: "user", content: toolResultContents },
         ],
       });
 
+      // 후속 응답으로 최종 텍스트 교체
+      finalText = "";
       for (const block of followUp.content) {
         if (block.type === "text") {
-          finalText = block.text;
+          finalText += block.text;
         }
       }
     }

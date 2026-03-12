@@ -1,6 +1,6 @@
-import { BaseAgent } from "./base-agent";
-import { quoteTools } from "../tools/quote-tools";
-import { QUOTE_SYSTEM_PROMPT } from "../prompts/quote";
+import { BaseAgent } from "@/lib/ai/agents/base-agent";
+import { quoteTools } from "@/lib/ai/tools/quote-tools";
+import { QUOTE_SYSTEM_PROMPT } from "@/lib/ai/prompts/quote";
 
 export class QuoteAgent extends BaseAgent {
   constructor() {

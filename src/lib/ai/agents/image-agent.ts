@@ -1,5 +1,5 @@
-import { BaseAgent } from "./base-agent";
-import { imageTools } from "../tools/image-tools";
+import { BaseAgent } from "@/lib/ai/agents/base-agent";
+import { imageTools } from "@/lib/ai/tools/image-tools";
 
 const IMAGE_AGENT_PROMPT = `당신은 주문제작 가구 AI 이미지 생성 전문가입니다.
 

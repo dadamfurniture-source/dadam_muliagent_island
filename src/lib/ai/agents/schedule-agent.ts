@@ -1,5 +1,5 @@
-import { BaseAgent } from "./base-agent";
-import { scheduleTools } from "../tools/schedule-tools";
+import { BaseAgent } from "@/lib/ai/agents/base-agent";
+import { scheduleTools } from "@/lib/ai/tools/schedule-tools";
 
 const SCHEDULE_AGENT_PROMPT = `당신은 주문제작 가구 일정/워크플로우 관리 전문가입니다.
 

@@ -1,36 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getOrchestrator } from "@/lib/ai/agents/orchestrator";
 import type { AgentContext, AgentMessage } from "@/lib/ai/agents/types";
+import { createClient } from "@/lib/supabase/server";
+
+const chatRequestSchema = z.object({
+  message: z
+    .string()
+    .min(1, "메시지는 비어있을 수 없습니다")
+    .max(2000, "메시지는 2000자 이하여야 합니다"),
+  conversationHistory: z
+    .array(z.object({
+      id: z.string(),
+      role: z.enum(["user", "assistant", "system"]),
+      content: z.string(),
+      agentRole: z.string().optional(),
+      imageUrl: z.string().optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
+      createdAt: z.string(),
+    }))
+    .max(50, "대화 히스토리는 50개를 초과할 수 없습니다")
+    .optional()
+    .default([]),
+  projectId: z.string().uuid().optional(),
+  sessionData: z.record(z.string(), z.unknown()).optional().default({}),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // 1. 인증 확인
+    const supabase = await createClient();
     const {
-      message,
-      conversationHistory = [],
-      projectId,
-      sessionData = {},
-    } = body as {
-      message: string;
-      conversationHistory?: AgentMessage[];
-      projectId?: string;
-      sessionData?: Record<string, unknown>;
-    };
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!message || typeof message !== "string") {
+    if (authError || !user) {
       return NextResponse.json(
-        { error: "메시지가 필요합니다." },
+        { error: "인증이 필요합니다." },
+        { status: 401 },
+      );
+    }
+
+    // 2. 입력 검증
+    const body = await request.json();
+    const parseResult = chatRequestSchema.safeParse(body);
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "잘못된 입력입니다.", details: parseResult.error.issues },
         { status: 400 },
       );
     }
 
-    // TODO: 인증된 사용자 ID 가져오기 (Supabase 연동 후)
-    const userId = "temp-user";
+    const { message, conversationHistory, projectId, sessionData } =
+      parseResult.data;
 
+    // 3. 에이전트 실행
     const context: AgentContext = {
-      userId,
+      userId: user.id,
       projectId,
-      conversationHistory,
+      conversationHistory: conversationHistory as AgentMessage[],
       sessionData,
     };
 

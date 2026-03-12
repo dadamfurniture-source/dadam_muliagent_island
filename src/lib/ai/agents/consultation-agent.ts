@@ -1,6 +1,6 @@
-import { BaseAgent } from "./base-agent";
-import { consultationTools } from "../tools/consultation-tools";
-import { CONSULTATION_SYSTEM_PROMPT } from "../prompts/chat";
+import { BaseAgent } from "@/lib/ai/agents/base-agent";
+import { consultationTools } from "@/lib/ai/tools/consultation-tools";
+import { CONSULTATION_SYSTEM_PROMPT } from "@/lib/ai/prompts/chat";
 
 export class ConsultationAgent extends BaseAgent {
   constructor() {

@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  const supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,8 +35,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 미인증 사용자 → 로그인 페이지로
-  if (!user && pathname.startsWith("/dashboard")) {
+  // 미인증 사용자 → 로그인 페이지로 (대시보드 하위 모든 경로 보호)
+  const protectedPaths = ["/dashboard", "/ai-studio", "/projects", "/customers", "/schedule", "/finance", "/settings"];
+  const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
+  if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
