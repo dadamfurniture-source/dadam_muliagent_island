@@ -11,6 +11,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@base-ui/react": "^1.2.0",
+    "@excalidraw/excalidraw": "^0.18.0",
     "@google/genai": "^1.44.0",
     "@stripe/react-stripe-js": "^5.6.1",
     "@stripe/stripe-js": "^8.9.0",

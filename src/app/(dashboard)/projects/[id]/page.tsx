@@ -12,8 +12,11 @@ import { Separator } from "@/components/ui/separator";
 import { ProjectStatusSelect } from "@/components/projects/project-status-select";
 import { OrderItemForm } from "@/components/projects/order-item-form";
 import { QuoteSection } from "@/components/quote/quote-section";
+import { DrawingSection } from "@/components/drawing/drawing-section";
 import { getProject, getProjectItems } from "@/lib/actions/projects";
 import { getQuotes } from "@/lib/actions/quotes";
+import { getDrawings } from "@/lib/actions/drawings";
+import { getCurrentPlanName } from "@/lib/actions/subscriptions";
 import { FURNITURE_TYPE_LABELS } from "@/types";
 import type { ProjectStatus, FurnitureType } from "@/types";
 
@@ -27,16 +30,22 @@ export default async function ProjectDetailPage({
   let project;
   let items: Awaited<ReturnType<typeof getProjectItems>> = [];
   let quotes: Awaited<ReturnType<typeof getQuotes>> = [];
+  let drawings: Awaited<ReturnType<typeof getDrawings>> = [];
+  let planName = "free";
 
   try {
-    [project, items, quotes] = await Promise.all([
+    [project, items, quotes, drawings, planName] = await Promise.all([
       getProject(id),
       getProjectItems(id),
       getQuotes(id),
+      getDrawings(id),
+      getCurrentPlanName(),
     ]);
   } catch {
     notFound();
   }
+
+  const canUseDrawing = planName === "pro" || planName === "pro_plus";
 
   const customer = project.customer as {
     name: string;
@@ -153,6 +162,15 @@ export default async function ProjectDetailPage({
         projectId={project.id}
         quotes={quotes}
         hasItems={items.length > 0}
+      />
+
+      <Separator />
+
+      {/* 도면 */}
+      <DrawingSection
+        projectId={project.id}
+        drawings={drawings}
+        canUseDrawing={canUseDrawing}
       />
     </div>
   );
