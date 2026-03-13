@@ -104,6 +104,12 @@ export async function createTransaction(formData: FormData) {
     throw new Error("잘못된 날짜 형식입니다.");
   }
 
+  const [yr, mo, dy] = transactionDate.split("-").map(Number);
+  const dateObj = new Date(yr, mo - 1, dy);
+  if (dateObj.getFullYear() !== yr || dateObj.getMonth() !== mo - 1 || dateObj.getDate() !== dy) {
+    throw new Error("존재하지 않는 날짜입니다.");
+  }
+
   const projectId = (formData.get("project_id") as string)?.trim() || null;
   const description = (formData.get("description") as string)?.trim() || null;
   const paymentMethod = (formData.get("payment_method") as string)?.trim() || null;
@@ -125,8 +131,12 @@ export async function createTransaction(formData: FormData) {
 
 // 거래 삭제
 export async function deleteTransaction(id: string) {
-  const { supabase } = await requireAuth();
-  const { error } = await supabase.from("financial_transactions").delete().eq("id", id);
+  const { supabase, user } = await requireAuth();
+  const { error } = await supabase
+    .from("financial_transactions")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", user.id);
   if (error) throw error;
   revalidatePath("/finance");
 }

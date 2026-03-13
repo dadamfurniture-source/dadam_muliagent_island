@@ -31,6 +31,6 @@ CREATE POLICY "Users can update own notifications"
 CREATE POLICY "Users can delete own notifications"
   ON notifications FOR DELETE USING (auth.uid() = owner_id);
 
--- 서버에서 알림 생성 (service role 사용)
-CREATE POLICY "Service can insert notifications"
-  ON notifications FOR INSERT WITH CHECK (true);
+-- 사용자 자신의 알림만 생성 가능
+CREATE POLICY "Users can insert own notifications"
+  ON notifications FOR INSERT WITH CHECK (auth.uid() = owner_id);

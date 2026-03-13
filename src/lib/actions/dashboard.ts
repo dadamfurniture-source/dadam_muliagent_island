@@ -3,7 +3,7 @@
 import { requireAuth } from "@/lib/actions/auth-guard";
 
 export async function getDashboardStats() {
-  const { supabase } = await requireAuth();
+  const { supabase, user } = await requireAuth();
 
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -13,21 +13,24 @@ export async function getDashboardStats() {
   const today = now.toISOString().slice(0, 10);
 
   const [projectsRes, schedulesRes, financeRes, imagesRes] = await Promise.all([
-    supabase.from("projects").select("id, status"),
+    supabase.from("projects").select("id, status").eq("owner_id", user.id),
     supabase
       .from("schedules")
       .select("id")
+      .eq("owner_id", user.id)
       .gte("scheduled_date", today)
       .order("scheduled_date", { ascending: true })
       .limit(100),
     supabase
       .from("financial_transactions")
       .select("type, amount")
+      .eq("owner_id", user.id)
       .gte("transaction_date", startDate)
       .lte("transaction_date", endDate),
     supabase
       .from("ai_generated_images")
       .select("id")
+      .eq("user_id", user.id)
       .gte("created_at", `${thisMonth}-01T00:00:00`)
       .lt("created_at", `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, "0")}-01T00:00:00`),
   ]);
@@ -56,10 +59,11 @@ export async function getDashboardStats() {
 }
 
 export async function getRecentProjects() {
-  const { supabase } = await requireAuth();
+  const { supabase, user } = await requireAuth();
   const { data, error } = await supabase
     .from("projects")
-    .select("id, title, status, updated_at, customer:customers(name)")
+    .select("id, title, status, updated_at, customer:customers(id, name)")
+    .eq("owner_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(5);
   if (error) throw error;
@@ -67,11 +71,12 @@ export async function getRecentProjects() {
 }
 
 export async function getUpcomingSchedules() {
-  const { supabase } = await requireAuth();
+  const { supabase, user } = await requireAuth();
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from("schedules")
     .select("id, title, scheduled_date, schedule_type, project:projects(id, title)")
+    .eq("owner_id", user.id)
     .gte("scheduled_date", today)
     .order("scheduled_date", { ascending: true })
     .limit(5);
@@ -80,7 +85,7 @@ export async function getUpcomingSchedules() {
 }
 
 export async function getMonthlyRevenueChart() {
-  const { supabase } = await requireAuth();
+  const { supabase, user } = await requireAuth();
 
   // 최근 6개월 데이터
   const now = new Date();
@@ -90,17 +95,18 @@ export async function getMonthlyRevenueChart() {
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
     const monthStr = `${y}-${String(m).padStart(2, "0")}`;
-    const lastDay = new Date(y, m, 0).getDate();
+    const lastDayNum = new Date(y, m, 0).getDate();
     months.push({
       month: monthStr,
       startDate: `${monthStr}-01`,
-      endDate: `${monthStr}-${String(lastDay).padStart(2, "0")}`,
+      endDate: `${monthStr}-${String(lastDayNum).padStart(2, "0")}`,
     });
   }
 
   const { data, error } = await supabase
     .from("financial_transactions")
     .select("type, amount, transaction_date")
+    .eq("owner_id", user.id)
     .gte("transaction_date", months[0].startDate)
     .lte("transaction_date", months[months.length - 1].endDate);
 
@@ -121,8 +127,11 @@ export async function getMonthlyRevenueChart() {
 }
 
 export async function getProjectStatusDistribution() {
-  const { supabase } = await requireAuth();
-  const { data, error } = await supabase.from("projects").select("status");
+  const { supabase, user } = await requireAuth();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("status")
+    .eq("owner_id", user.id);
   if (error) throw error;
 
   const counts: Record<string, number> = {};

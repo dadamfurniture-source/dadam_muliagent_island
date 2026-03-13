@@ -127,6 +127,16 @@ export const scheduleTools: AgentTool[] = [
         return JSON.stringify({ success: false, error: "잘못된 날짜 형식" });
       }
 
+      const timeStart = (input.time_start as string) || null;
+      const timeEnd = (input.time_end as string) || null;
+      const timeRegex = /^\d{2}:\d{2}$/;
+      if (timeStart && !timeRegex.test(timeStart)) {
+        return JSON.stringify({ success: false, error: "잘못된 시작 시간 형식 (HH:mm)" });
+      }
+      if (timeEnd && !timeRegex.test(timeEnd)) {
+        return JSON.stringify({ success: false, error: "잘못된 종료 시간 형식 (HH:mm)" });
+      }
+
       const { data, error } = await supabase
         .from("schedules")
         .insert({
@@ -135,8 +145,8 @@ export const scheduleTools: AgentTool[] = [
           type: scheduleType,
           title,
           scheduled_date: date,
-          scheduled_time_start: (input.time_start as string) || null,
-          scheduled_time_end: (input.time_end as string) || null,
+          scheduled_time_start: timeStart,
+          scheduled_time_end: timeEnd,
           notes: (input.notes as string) || null,
         })
         .select("id")
