@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   title: "FurniAI - 주문제작 가구 AI 플랫폼",
   description:
     "현장사진에 맞춤 가구를 AI로 합성하고, 자동 견적과 프로젝트 관리까지. 주문제작 가구의 모든 것.",
+  manifest: "/manifest.json",
+  themeColor: "#111827",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FurniAI",
+  },
 };
 
 export default function RootLayout({

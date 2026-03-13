@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/layout/notification-bell";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "대시보드" },
@@ -59,6 +60,7 @@ export function Header() {
 
       {/* 우측 메뉴 */}
       <div className="flex items-center gap-3">
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger>
             <span className="relative flex h-9 w-9 shrink-0 overflow-hidden rounded-full cursor-pointer">

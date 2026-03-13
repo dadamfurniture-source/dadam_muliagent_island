@@ -101,7 +101,7 @@ export async function updateProject(id: string, formData: FormData) {
 }
 
 export async function updateProjectStatus(id: string, status: ProjectStatus) {
-  const { supabase } = await requireAuth();
+  const { supabase, user } = await requireAuth();
 
   const validStatuses: ProjectStatus[] = [
     "consultation", "measuring", "designing", "quoting",
@@ -112,12 +112,37 @@ export async function updateProjectStatus(id: string, status: ProjectStatus) {
     throw new Error("잘못된 상태값입니다.");
   }
 
+  // 프로젝트 제목 조회 (알림용)
+  const { data: project } = await supabase
+    .from("projects")
+    .select("title")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("projects")
     .update({ status })
     .eq("id", id);
 
   if (error) throw error;
+
+  // 상태 변경 알림 생성
+  const STATUS_LABELS: Record<string, string> = {
+    consultation: "상담", measuring: "실측", designing: "설계/디자인",
+    quoting: "견적", confirmed: "확정", ordering: "발주",
+    manufacturing: "제작", installing: "설치", completed: "완료",
+    after_service: "A/S",
+  };
+  const label = STATUS_LABELS[status] || status;
+  const title = project?.title || "프로젝트";
+  await supabase.from("notifications").insert({
+    owner_id: user.id,
+    type: "project_status",
+    title: `${title} - ${label} 단계로 변경`,
+    message: `프로젝트가 "${label}" 단계로 변경되었습니다.`,
+    link: `/projects/${id}`,
+  }).then(() => {});
+
   revalidatePath("/projects");
   revalidatePath(`/projects/${id}`);
 }
