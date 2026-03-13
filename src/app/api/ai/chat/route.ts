@@ -4,6 +4,7 @@ import { getOrchestrator } from "@/lib/ai/agents/orchestrator";
 import type { AgentContext, AgentMessage } from "@/lib/ai/agents/types";
 import { createClient } from "@/lib/supabase/server";
 import { generateAIImage } from "@/lib/actions/ai-images";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/cloudflare/rate-limit";
 import type { FurnitureType } from "@/types";
 
 const chatRequestSchema = z.object({
@@ -50,7 +51,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. 입력 검증
+    // 2. 레이트 리밋
+    const rateResult = checkRateLimit(`chat:${user.id}`, RATE_LIMITS.aiChat);
+    if (!rateResult.success) {
+      return NextResponse.json(
+        { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rateResult.resetAt - Date.now()) / 1000)) } },
+      );
+    }
+
+    // 3. 입력 검증
     const body = await request.json();
     const parseResult = chatRequestSchema.safeParse(body);
 

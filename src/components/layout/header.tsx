@@ -13,6 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { logout } from "@/lib/actions/auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "대시보드" },
@@ -77,7 +78,7 @@ export function Header() {
               <Link href="/settings/subscription" className="w-full">구독 관리</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>로그아웃</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => logout()}>로그아웃</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

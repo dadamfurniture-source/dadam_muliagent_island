@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { generateFurnitureImage } from "@/lib/ai/gemini";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/cloudflare/rate-limit";
 
 // 프롬프트 인젝션 방지: 줄바꿈/제어문자 제거, 길이 제한
 const sanitize = (s: string) => s.replace(/[\n\r\t\x00-\x1f]/g, " ").trim().slice(0, 100);
@@ -26,6 +27,15 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    // 레이트 리밋
+    const rateResult = checkRateLimit(`image:${user.id}`, RATE_LIMITS.imageGen);
+    if (!rateResult.success) {
+      return NextResponse.json(
+        { error: "이미지 생성 요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+        { status: 429 },
+      );
     }
 
     // 프로+ 플랜 확인

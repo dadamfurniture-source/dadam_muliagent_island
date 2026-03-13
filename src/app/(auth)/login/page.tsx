@@ -1,22 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+import { login } from "@/lib/actions/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  async function handleLogin(e: React.FormEvent) {
+  function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    // TODO: Supabase 인증 연동
-    setLoading(false);
+    setError(null);
+
+    startTransition(async () => {
+      const result = await login({ email, password, turnstileToken });
+      if (result?.error) {
+        setError(result.error);
+      }
+    });
   }
 
   return (
@@ -51,8 +60,15 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "로그인 중..." : "로그인"}
+
+            <TurnstileWidget onSuccess={setTurnstileToken} />
+
+            {error && (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "로그인 중..." : "로그인"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-gray-500">
